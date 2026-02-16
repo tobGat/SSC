@@ -1,10 +1,13 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { useSocket } from '../hooks/useSocket';
 import { SongSubmission } from '../components/student/SongSubmission';
 import { VotingInterface } from '../components/student/VotingInterface';
 import { motion } from 'framer-motion';
 
 export const StudentView = () => {
+  const { roomCode } = useParams<{ roomCode: string }>();
+
   const {
     connected,
     phase,
@@ -12,9 +15,49 @@ export const StudentView = () => {
     votingStats,
     votingComplete,
     finalResults,
+    roomJoined,
+    roomError,
+    currentRoomCode,
+    joinRoom,
     submitSong,
     submitVote,
   } = useSocket();
+
+  // Auto-join room from URL
+  useEffect(() => {
+    if (roomCode && connected && !roomJoined && !currentRoomCode) {
+      joinRoom(roomCode);
+    }
+  }, [roomCode, connected, roomJoined, currentRoomCode, joinRoom]);
+
+  // Room error
+  if (roomError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="card text-center max-w-md"
+        >
+          <div className="text-6xl mb-4">❌</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Raum nicht gefunden</h2>
+          <p className="text-gray-600 mb-6">Der Raumcode „{roomCode}" ist ungültig oder der Raum existiert nicht mehr.</p>
+          <Link to="/" className="btn-primary inline-block">Zurück zur Startseite</Link>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Waiting for room join
+  if (!roomJoined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="card text-center">
+          <p className="text-gray-600">Raum wird beigetreten...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-4 md:p-8">
@@ -24,9 +67,14 @@ export const StudentView = () => {
           <Link to="/" className="text-primary-600 hover:text-primary-700 font-semibold">
             ← Zurück
           </Link>
-          <div className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
-            <span className="text-sm text-gray-600">{connected ? 'Verbunden' : 'Nicht verbunden'}</span>
+          <div className="flex items-center gap-4">
+            <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-bold font-mono tracking-wider">
+              Raum: {currentRoomCode}
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className="text-sm text-gray-600">{connected ? 'Verbunden' : 'Nicht verbunden'}</span>
+            </div>
           </div>
         </div>
 

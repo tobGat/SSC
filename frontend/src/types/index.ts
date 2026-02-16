@@ -55,3 +55,11 @@ export interface ExportData {
   format: 'csv' | 'pdf';
   data: string;
 }
+
+export interface RoomCreatedResponse {
+  roomCode: string;
+}
+
+export interface RoomJoinedResponse {
+  roomCode: string;
+}

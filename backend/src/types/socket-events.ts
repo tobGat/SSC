@@ -65,6 +65,8 @@ export interface AuthResponse {
 // Socket Event Names
 export const SocketEvents = {
   // Client to Server
+  CREATE_ROOM: 'create-room',
+  JOIN_ROOM: 'join-room',
   SUBMIT_SONG: 'submit-song',
   EDIT_SONG: 'edit-song',
   DELETE_SONG: 'delete-song',
@@ -74,8 +76,13 @@ export const SocketEvents = {
   ADMIN_LOGIN: 'admin-login',
   EXPORT_RESULTS: 'export-results',
   RESET_SESSION: 'reset-session',
+  CHECK_PASSWORD_STATUS: 'check-password-status',
+  SET_PASSWORD: 'set-password',
 
   // Server to Client
+  ROOM_CREATED: 'room-created',
+  ROOM_JOINED: 'room-joined',
+  ROOM_ERROR: 'room-error',
   SONGS_UPDATED: 'songs-updated',
   CURRENT_SONG: 'current-song',
   VOTING_COMPLETE: 'voting-complete',
@@ -83,5 +90,6 @@ export const SocketEvents = {
   VOTE_STATS: 'vote-stats',
   AUTH_RESULT: 'auth-result',
   PHASE_CHANGED: 'phase-changed',
+  PASSWORD_STATUS: 'password-status',
   ERROR: 'error',
 } as const;

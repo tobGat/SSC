@@ -20,6 +20,11 @@ export const SongSubmission = ({ onSubmit, phase }: SongSubmissionProps) => {
       return;
     }
 
+    if (link.trim() && /spotify\.com|open\.spotify/i.test(link.trim())) {
+      alert('Spotify-Links sind nicht erlaubt. Bitte verwende einen YouTube-Link.');
+      return;
+    }
+
     onSubmit(title.trim(), artist.trim(), link.trim() || undefined);
     setSubmitted(true);
 
@@ -98,7 +103,7 @@ export const SongSubmission = ({ onSubmit, phase }: SongSubmissionProps) => {
               value={link}
               onChange={e => setLink(e.target.value)}
               className="input-field"
-              placeholder="YouTube oder Spotify Link"
+              placeholder="YouTube-Link"
             />
           </div>
 

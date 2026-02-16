@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
-import type { Song, CurrentSongData, VotingStats, SongRanking, AuthResponse, Phase, ExportData } from '../types';
+import type { Song, CurrentSongData, VotingStats, SongRanking, AuthResponse, Phase, ExportData, RoomCreatedResponse, RoomJoinedResponse } from '../types';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
@@ -13,7 +13,14 @@ export const useSocket = () => {
   const [votingStats, setVotingStats] = useState<VotingStats>({ voted: 0, total: 0 });
   const [finalResults, setFinalResults] = useState<SongRanking[]>([]);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [passwordIsSet, setPasswordIsSet] = useState<boolean | null>(null);
   const [votingComplete, setVotingComplete] = useState<{ songId: string; averageScore?: number } | null>(null);
+
+  // Room state
+  const [roomJoined, setRoomJoined] = useState(false);
+  const [roomError, setRoomError] = useState<string | null>(null);
+  const [currentRoomCode, setCurrentRoomCode] = useState<string | null>(null);
 
   useEffect(() => {
     const newSocket = io(BACKEND_URL);
@@ -28,6 +35,26 @@ export const useSocket = () => {
       console.log('Disconnected from server');
     });
 
+    newSocket.on('room-created', (data: RoomCreatedResponse) => {
+      setCurrentRoomCode(data.roomCode);
+      setRoomJoined(true);
+      setRoomError(null);
+      console.log('Room created:', data.roomCode);
+    });
+
+    newSocket.on('room-joined', (data: RoomJoinedResponse) => {
+      setCurrentRoomCode(data.roomCode);
+      setRoomJoined(true);
+      setRoomError(null);
+      console.log('Room joined:', data.roomCode);
+    });
+
+    newSocket.on('room-error', (message: string) => {
+      setRoomError(message);
+      setRoomJoined(false);
+      console.error('Room error:', message);
+    });
+
     newSocket.on('songs-updated', (updatedSongs: Song[]) => {
       setSongs(updatedSongs);
     });
@@ -38,7 +65,7 @@ export const useSocket = () => {
 
     newSocket.on('current-song', (data: CurrentSongData) => {
       setCurrentSong(data);
-      setVotingComplete(null); // Reset voting complete when new song starts
+      setVotingComplete(null);
     });
 
     newSocket.on('vote-stats', (stats: VotingStats) => {
@@ -53,9 +80,16 @@ export const useSocket = () => {
       setFinalResults(results);
     });
 
+    newSocket.on('password-status', (data: { isSet: boolean }) => {
+      setPasswordIsSet(data.isSet);
+    });
+
     newSocket.on('auth-result', (response: AuthResponse) => {
       if (response.success && response.token) {
         setAuthToken(response.token);
+        setAuthError(null);
+      } else {
+        setAuthError(response.message || 'Login fehlgeschlagen');
       }
     });
 
@@ -69,6 +103,23 @@ export const useSocket = () => {
       newSocket.close();
     };
   }, []);
+
+  const createRoom = useCallback(() => {
+    if (socket) {
+      setRoomError(null);
+      socket.emit('create-room');
+    }
+  }, [socket]);
+
+  const joinRoom = useCallback(
+    (roomCode: string) => {
+      if (socket) {
+        setRoomError(null);
+        socket.emit('join-room', roomCode);
+      }
+    },
+    [socket]
+  );
 
   const submitSong = useCallback(
     (title: string, artist: string, link?: string) => {
@@ -121,11 +172,28 @@ export const useSocket = () => {
   const login = useCallback(
     (password: string) => {
       if (socket) {
+        setAuthError(null);
         socket.emit('admin-login', password);
       }
     },
     [socket]
   );
+
+  const setPasswordFn = useCallback(
+    (password: string) => {
+      if (socket) {
+        setAuthError(null);
+        socket.emit('set-password', password);
+      }
+    },
+    [socket]
+  );
+
+  const checkPasswordStatus = useCallback(() => {
+    if (socket) {
+      socket.emit('check-password-status');
+    }
+  }, [socket]);
 
   const exportResults = useCallback(
     (format: 'csv' | 'pdf', callback: (data: ExportData) => void) => {
@@ -140,6 +208,9 @@ export const useSocket = () => {
   const resetSession = useCallback(() => {
     if (socket) {
       socket.emit('reset-session');
+      setAuthToken(null);
+      setPasswordIsSet(null);
+      setAuthError(null);
     }
   }, [socket]);
 
@@ -151,7 +222,14 @@ export const useSocket = () => {
     votingStats,
     finalResults,
     authToken,
+    authError,
+    passwordIsSet,
     votingComplete,
+    roomJoined,
+    roomError,
+    currentRoomCode,
+    createRoom,
+    joinRoom,
     submitSong,
     editSong,
     deleteSong,
@@ -159,6 +237,8 @@ export const useSocket = () => {
     nextSong,
     submitVote,
     login,
+    setPassword: setPasswordFn,
+    checkPasswordStatus,
     exportResults,
     resetSession,
   };

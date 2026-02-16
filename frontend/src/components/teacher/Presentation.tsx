@@ -1,6 +1,18 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { CurrentSongData } from '../../types';
+
+function getYouTubeId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
 
 interface PresentationProps {
   currentSong: CurrentSongData | null;
@@ -11,6 +23,11 @@ interface PresentationProps {
 }
 
 export const Presentation = ({ currentSong, votingStats, votingComplete, onNext, phase }: PresentationProps) => {
+  const youtubeId = useMemo(() => {
+    if (currentSong?.song.link) return getYouTubeId(currentSong.song.link);
+    return null;
+  }, [currentSong?.song.link]);
+
   useEffect(() => {
     // Auto-advance when voting is complete (after 5 seconds)
     if (votingComplete && currentSong && votingComplete.songId === currentSong.song.id) {
@@ -78,11 +95,21 @@ export const Presentation = ({ currentSong, votingStats, votingComplete, onNext,
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <div className="text-8xl mb-8">🎵</div>
+            {!youtubeId && <div className="text-8xl mb-8">🎵</div>}
             <h1 className="text-6xl font-extrabold mb-6 drop-shadow-lg">{currentSong.song.title}</h1>
             <h2 className="text-4xl font-semibold mb-8 opacity-90">{currentSong.song.artist}</h2>
 
-            {currentSong.song.link && (
+            {youtubeId ? (
+              <div className="relative w-full pt-[56.25%] rounded-2xl overflow-hidden shadow-2xl">
+                <iframe
+                  className="absolute inset-0 w-full h-full"
+                  src={`https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0`}
+                  title={currentSong.song.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            ) : currentSong.song.link ? (
               <a
                 href={currentSong.song.link}
                 target="_blank"
@@ -91,7 +118,7 @@ export const Presentation = ({ currentSong, votingStats, votingComplete, onNext,
               >
                 🎧 Song anhören
               </a>
-            )}
+            ) : null}
           </motion.div>
         </div>
       </motion.div>

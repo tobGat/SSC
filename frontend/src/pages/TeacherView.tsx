@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSocket } from '../hooks/useSocket';
 import { AdminLogin } from '../components/teacher/AdminLogin';
 import { SongList } from '../components/teacher/SongList';
@@ -7,6 +8,10 @@ import { FinalRanking } from '../components/teacher/FinalRanking';
 import { motion } from 'framer-motion';
 
 export const TeacherView = () => {
+  const { roomCode: urlRoomCode } = useParams<{ roomCode: string }>();
+  const navigate = useNavigate();
+  const isCreateMode = !urlRoomCode; // /teacher/create has no :roomCode param
+
   const {
     connected,
     phase,
@@ -16,7 +21,16 @@ export const TeacherView = () => {
     votingComplete,
     finalResults,
     authToken,
+    authError,
+    passwordIsSet,
+    roomJoined,
+    roomError,
+    currentRoomCode,
+    createRoom,
+    joinRoom,
     login,
+    setPassword,
+    checkPasswordStatus,
     editSong,
     deleteSong,
     startPresentation,
@@ -25,13 +39,41 @@ export const TeacherView = () => {
     resetSession,
   } = useSocket();
 
+  // Create room when entering /teacher/create
+  useEffect(() => {
+    if (isCreateMode && connected && !roomJoined && !currentRoomCode) {
+      createRoom();
+    }
+  }, [isCreateMode, connected, roomJoined, currentRoomCode, createRoom]);
+
+  // Redirect to /teacher/ROOMCODE after room is created
+  useEffect(() => {
+    if (isCreateMode && currentRoomCode) {
+      navigate(`/teacher/${currentRoomCode}`, { replace: true });
+    }
+  }, [isCreateMode, currentRoomCode, navigate]);
+
+  // Join existing room from URL
+  useEffect(() => {
+    if (urlRoomCode && connected && !roomJoined && !currentRoomCode) {
+      joinRoom(urlRoomCode);
+    }
+  }, [urlRoomCode, connected, roomJoined, currentRoomCode, joinRoom]);
+
+  // Check password status once room is joined
+  useEffect(() => {
+    if (roomJoined && !authToken) {
+      checkPasswordStatus();
+    }
+  }, [roomJoined, authToken, checkPasswordStatus]);
+
   const handleExportCSV = () => {
     exportResults('csv', (data) => {
       const blob = new Blob([data.data], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `ssc-results-${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `ssc-results-${currentRoomCode}-${new Date().toISOString().split('T')[0]}.csv`;
       a.click();
       window.URL.revokeObjectURL(url);
     });
@@ -43,15 +85,53 @@ export const TeacherView = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `ssc-results-${new Date().toISOString().split('T')[0]}.pdf`;
+      a.download = `ssc-results-${currentRoomCode}-${new Date().toISOString().split('T')[0]}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
     });
   };
 
+  // Room error
+  if (roomError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="card text-center max-w-md"
+        >
+          <div className="text-6xl mb-4">❌</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Fehler</h2>
+          <p className="text-gray-600 mb-6">{roomError}</p>
+          <Link to="/" className="btn-primary inline-block">Zurück zur Startseite</Link>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Waiting for room
+  if (!roomJoined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="card text-center">
+          <p className="text-gray-600">Raum wird erstellt...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Show login if not authenticated
   if (!authToken) {
-    return <AdminLogin onLogin={login} authToken={authToken} />;
+    return (
+      <AdminLogin
+        onLogin={login}
+        onSetPassword={setPassword}
+        authToken={authToken}
+        passwordIsSet={passwordIsSet}
+        authError={authError}
+        roomCode={currentRoomCode}
+      />
+    );
   }
 
   return (
@@ -64,6 +144,9 @@ export const TeacherView = () => {
               ← Zurück
             </Link>
             <div className="flex items-center gap-4">
+              <div className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-bold font-mono tracking-wider">
+                Raum: {currentRoomCode}
+              </div>
               <div className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
                 <span className="text-sm text-gray-600">{connected ? 'Verbunden' : 'Nicht verbunden'}</span>
