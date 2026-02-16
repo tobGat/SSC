@@ -4,6 +4,7 @@ import { useSocket } from '../hooks/useSocket';
 import { SongSubmission } from '../components/student/SongSubmission';
 import { VotingInterface } from '../components/student/VotingInterface';
 import { motion } from 'framer-motion';
+import sscLogo from '../assets/logo_ssc_transp.png';
 
 export const StudentView = () => {
   const { roomCode } = useParams<{ roomCode: string }>();
@@ -79,9 +80,7 @@ export const StudentView = () => {
         </div>
 
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center mt-6">
-          <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            SSC - School Song Contest
-          </h1>
+          <img src={sscLogo} alt="SSC - School Song Contest" className="h-14 md:h-16 mx-auto mb-2" />
           <p className="text-gray-600">Schüler-Ansicht</p>
         </motion.div>
       </div>

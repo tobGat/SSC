@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import sscLogo from '../assets/logo_ssc_transp.png';
 
 export const Home = () => {
   const [roomCode, setRoomCode] = useState('');
@@ -30,8 +31,7 @@ export const Home = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="eurovision-title mb-4">SSC</h1>
-          <h2 className="text-3xl font-bold text-gray-700 mb-2">School Song Contest</h2>
+          <img src={sscLogo} alt="SSC - School Song Contest" className="h-20 md:h-24 mx-auto mb-4" />
           <p className="text-lg text-gray-600">Wähle deine Ansicht</p>
         </motion.div>
 

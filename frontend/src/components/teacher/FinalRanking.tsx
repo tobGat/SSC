@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Confetti from 'react-confetti';
 import type { SongRanking } from '../../types';
+import sscLogo from '../../assets/logo_ssc_transp.png';
 
 interface FinalRankingProps {
   rankings: SongRanking[];
@@ -59,7 +60,7 @@ export const FinalRanking = ({ rankings, onExportCSV, onExportPDF, onReset }: Fi
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
           <h1 className="eurovision-title mb-4">🏆 Endergebnis 🏆</h1>
-          <p className="text-xl text-gray-600">SSC - School Song Contest</p>
+          <img src={sscLogo} alt="SSC - School Song Contest" className="h-12 mx-auto mt-2" />
         </motion.div>
 
         {/* Top 3 Podium */}
