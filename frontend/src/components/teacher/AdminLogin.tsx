@@ -76,7 +76,8 @@ export const AdminLogin = ({ onLogin, onSetPassword, authToken, passwordIsSet, a
               <div className="mb-4 p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
                 <p className="text-sm text-blue-600 font-semibold mb-1">Dein Raumcode</p>
                 <p className="text-4xl font-mono font-extrabold tracking-widest text-blue-800">{roomCode}</p>
-                <p className="text-xs text-blue-500 mt-1">Teile diesen Code mit deiner Klasse</p>
+                <p className="text-xs text-blue-500 mt-2">Teile diesen Code oder Link mit deiner Klasse:</p>
+                <p className="text-xs text-blue-600 font-mono mt-1 break-all select-all">{`${window.location.origin}/student/${roomCode}`}</p>
               </div>
             )}
             <div className="text-6xl mb-4">🔐</div>
