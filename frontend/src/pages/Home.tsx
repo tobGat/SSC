@@ -75,15 +75,6 @@ export const Home = () => {
             </div>
           </motion.div>
         </div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="text-center mt-12 text-gray-500 text-sm"
-        >
-          <p>Entwickelt für den Eurovision-inspirierten Song Contest</p>
-        </motion.div>
       </div>
     </div>
   );
