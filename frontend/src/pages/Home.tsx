@@ -6,6 +6,8 @@ import sscLogo from '../assets/logo_ssc_transp.png';
 export const Home = () => {
   const [roomCode, setRoomCode] = useState('');
   const [error, setError] = useState('');
+  const [teacherCode, setTeacherCode] = useState('');
+  const [teacherError, setTeacherError] = useState('');
   const navigate = useNavigate();
 
   const handleJoinRoom = (e: React.FormEvent) => {
@@ -64,14 +66,45 @@ export const Home = () => {
           </motion.div>
 
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
-            <div
-              className="card-hover text-center h-full cursor-pointer"
-              onClick={() => navigate('/teacher/create')}
-            >
+            <div className="card-hover text-center h-full">
               <div className="text-8xl mb-6">👨‍🏫</div>
               <h3 className="text-2xl font-bold text-gray-800 mb-3">Lehrer:in</h3>
               <p className="text-gray-600 mb-4">Erstelle einen neuen Raum für deine Klasse</p>
-              <div className="btn-gold inline-block">Neuen Raum erstellen</div>
+              <button className="btn-gold w-full" onClick={() => navigate('/teacher/create')}>
+                Neuen Raum erstellen
+              </button>
+
+              <div className="flex items-center gap-3 my-5">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-sm text-gray-400">oder</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+
+              <p className="text-gray-500 text-sm mb-3">Bestehende Sitzung fortsetzen</p>
+              <form
+                onSubmit={e => {
+                  e.preventDefault();
+                  const code = teacherCode.trim().toUpperCase();
+                  if (!code || code.length < 4) { setTeacherError('Raumcode ist zu kurz'); return; }
+                  setTeacherError('');
+                  navigate(`/teacher/${code}`);
+                }}
+                className="space-y-2"
+              >
+                <input
+                  type="text"
+                  value={teacherCode}
+                  onChange={e => { setTeacherCode(e.target.value.toUpperCase()); setTeacherError(''); }}
+                  className="input-field text-center text-xl tracking-widest font-mono"
+                  placeholder="RAUMCODE"
+                  maxLength={6}
+                  autoComplete="off"
+                />
+                {teacherError && <p className="text-red-600 text-sm">{teacherError}</p>}
+                <button type="submit" className="btn-secondary w-full">
+                  Sitzung fortsetzen
+                </button>
+              </form>
             </div>
           </motion.div>
         </div>

@@ -78,6 +78,9 @@ export const AdminLogin = ({ onLogin, onSetPassword, authToken, passwordIsSet, a
                 <p className="text-4xl font-mono font-extrabold tracking-widest text-blue-800">{roomCode}</p>
                 <p className="text-xs text-blue-500 mt-2">Teile diesen Code oder Link mit deiner Klasse:</p>
                 <p className="text-xs text-blue-600 font-mono mt-1 break-all select-all">{`${window.location.origin}/student/${roomCode}`}</p>
+                <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-xs text-amber-700 font-semibold">💾 Notiere diesen Code! Du kannst damit die Sitzung nach einer Pause fortsetzen.</p>
+                </div>
               </div>
             )}
             <div className="text-6xl mb-4">🔐</div>
@@ -144,7 +147,7 @@ export const AdminLogin = ({ onLogin, onSetPassword, authToken, passwordIsSet, a
             </div>
           )}
           <div className="text-6xl mb-4">🔐</div>
-          <h2 className="text-2xl font-bold text-gray-800">Lehrer-Zugang</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Lehrer:innen-Zugang</h2>
           <p className="text-gray-600 mt-2">Bitte melde dich mit dem Session-Passwort an</p>
         </div>
 
