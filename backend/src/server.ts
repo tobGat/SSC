@@ -170,7 +170,6 @@ io.on('connection', (socket: Socket) => {
       const { clientId } = data;
       room.session.addSong(title.trim(), artist.trim(), link?.trim(), clientId);
       emitSongsUpdate(roomCode, room);
-      SessionPersistence.save(room);
       console.log(`[${roomCode}] Song submitted: ${title} by ${artist}`);
     } catch (error) {
       socket.emit(SocketEvents.ERROR, 'Failed to submit song');
@@ -198,7 +197,6 @@ io.on('connection', (socket: Socket) => {
       }
 
       emitSongsUpdate(roomCode, room);
-      SessionPersistence.save(room);
       console.log(`[${roomCode}] Song edited: ${id}`);
     } catch (error) {
       socket.emit(SocketEvents.ERROR, 'Failed to edit song');
@@ -228,7 +226,6 @@ io.on('connection', (socket: Socket) => {
       }
 
       emitSongsUpdate(roomCode, room);
-      SessionPersistence.save(room);
       console.log(`[${roomCode}] Song deleted: ${songId}`);
     } catch (error) {
       socket.emit(SocketEvents.ERROR, 'Failed to delete song');
@@ -246,7 +243,6 @@ io.on('connection', (socket: Socket) => {
       room.session.startPresentation();
       emitPhaseChange(roomCode, room);
       emitCurrentSong(roomCode, room);
-      SessionPersistence.save(room);
       console.log(`[${roomCode}] Presentation started`);
     } catch (error) {
       socket.emit(SocketEvents.ERROR, error instanceof Error ? error.message : 'Failed to start presentation');
@@ -271,7 +267,6 @@ io.on('connection', (socket: Socket) => {
         io.to(roomCode).emit(SocketEvents.FINAL_RESULTS, rankings);
       }
 
-      SessionPersistence.save(room);
       console.log(`[${roomCode}] Next song. Has next: ${hasNext}`);
     } catch (error) {
       socket.emit(SocketEvents.ERROR, 'Failed to move to next song');
@@ -304,7 +299,6 @@ io.on('connection', (socket: Socket) => {
       }
 
       emitVoteStats(roomCode, room);
-      SessionPersistence.save(room);
       console.log(`[${roomCode}] Vote: ${points} points for ${songId}`);
 
       // Check if all students have voted (excluding admins)
@@ -363,7 +357,6 @@ io.on('connection', (socket: Socket) => {
         if (room.session.phase === 'presentation') {
           emitVoteStats(roomCode, room);
         }
-        SessionPersistence.save(room);
         console.log(`[${roomCode}] Password set by ${socket.id}`);
       } else {
         socket.emit(SocketEvents.AUTH_RESULT, {

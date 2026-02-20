@@ -7,15 +7,6 @@ export class RoomManager {
   private readonly INACTIVITY_TIMEOUT_MINUTES = 720; // 12 hours
 
   constructor() {
-    // Restore previously saved sessions
-    const restored = SessionPersistence.loadAll();
-    for (const room of restored) {
-      this.rooms.set(room.roomCode, room);
-    }
-    if (restored.length > 0) {
-      console.log(`[RoomManager] Restored ${restored.length} session(s) from disk`);
-    }
-
     // Check every 30 minutes for inactive rooms
     this.cleanupInterval = setInterval(() => this.cleanup(), 30 * 60 * 1000);
   }
@@ -49,7 +40,6 @@ export class RoomManager {
   deleteRoom(code: string): void {
     const upper = code.toUpperCase();
     this.rooms.delete(upper);
-    SessionPersistence.remove(upper);
     console.log(`Room deleted: ${code} (total: ${this.rooms.size})`);
   }
 
@@ -76,7 +66,6 @@ export class RoomManager {
     }
     const room = SessionPersistence.restoreRoomFromData(data, code);
     this.rooms.set(code, room);
-    SessionPersistence.save(room);
     console.log(`Room imported: ${code} (total: ${this.rooms.size})`);
     return code;
   }
