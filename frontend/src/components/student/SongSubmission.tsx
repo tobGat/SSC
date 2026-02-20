@@ -27,13 +27,6 @@ export const SongSubmission = ({ onSubmit, phase }: SongSubmissionProps) => {
 
     onSubmit(title.trim(), artist.trim(), link.trim() || undefined);
     setSubmitted(true);
-
-    setTimeout(() => {
-      setTitle('');
-      setArtist('');
-      setLink('');
-      setSubmitted(false);
-    }, 2000);
   };
 
   if (phase !== 'submission') {
