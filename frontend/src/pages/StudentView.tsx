@@ -88,7 +88,7 @@ export const StudentView = () => {
 
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center mt-6">
           <img src={sscLogo} alt="SSC - School Song Contest" className="h-14 md:h-16 mx-auto mb-2" />
-          <p className="text-gray-600">Schüler-Ansicht</p>
+          <p className="text-gray-600">Schüler:innen-Ansicht</p>
         </motion.div>
       </div>
 
