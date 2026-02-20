@@ -37,6 +37,7 @@ export const TeacherView = () => {
     startPresentation,
     nextSong,
     exportResults,
+    exportSession,
     resetSession,
   } = useSocket();
 
@@ -67,6 +68,20 @@ export const TeacherView = () => {
       checkPasswordStatus();
     }
   }, [roomJoined, authToken, checkPasswordStatus]);
+
+  const handleExportSession = () => {
+    exportSession((data) => {
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const date = new Date().toISOString().split('T')[0];
+      a.download = `ssc-sitzung-${currentRoomCode}-${date}.json`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    });
+  };
 
   const handleExportCSV = () => {
     exportResults('csv', (data) => {
@@ -155,12 +170,19 @@ export const TeacherView = () => {
               <div className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold">
                 Phase: {phase === 'submission' ? 'Einreichung' : 'Ergebnisse'}
               </div>
+              <button
+                onClick={handleExportSession}
+                className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors font-medium"
+                title="Sitzung als Datei speichern – kann später wieder importiert werden"
+              >
+                💾 Sitzung exportieren
+              </button>
             </div>
           </div>
 
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center mt-6">
             <img src={sscLogo} alt="SSC - School Song Contest" className="h-14 md:h-16 mx-auto mb-2" />
-            <p className="text-gray-600">Lehrer-Ansicht</p>
+            <p className="text-gray-600">Lehrer:innen-Ansicht</p>
           </motion.div>
         </div>
       )}

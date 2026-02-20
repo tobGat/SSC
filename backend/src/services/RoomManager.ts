@@ -66,6 +66,21 @@ export class RoomManager {
     });
   }
 
+  importRoom(data: SessionPersistence.PersistedSession): string {
+    let code = data.roomCode;
+    if (this.rooms.has(code)) {
+      code = this.generateCode();
+      while (this.rooms.has(code)) {
+        code = this.generateCode();
+      }
+    }
+    const room = SessionPersistence.restoreRoomFromData(data, code);
+    this.rooms.set(code, room);
+    SessionPersistence.save(room);
+    console.log(`Room imported: ${code} (total: ${this.rooms.size})`);
+    return code;
+  }
+
   getRoomCount(): number {
     return this.rooms.size;
   }

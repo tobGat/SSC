@@ -1,14 +1,42 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import sscLogo from '../assets/logo_ssc_transp.png';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
 export const Home = () => {
   const [roomCode, setRoomCode] = useState('');
   const [error, setError] = useState('');
   const [teacherCode, setTeacherCode] = useState('');
   const [teacherError, setTeacherError] = useState('');
+  const [importError, setImportError] = useState('');
+  const importFileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportError('');
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const res = await fetch(`${BACKEND_URL}/api/sessions/import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Import fehlgeschlagen');
+      }
+      const { roomCode: newCode } = await res.json();
+      navigate(`/teacher/${newCode}`);
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Datei konnte nicht importiert werden');
+      if (importFileRef.current) importFileRef.current.value = '';
+    }
+  };
 
   const handleJoinRoom = (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +133,30 @@ export const Home = () => {
                   Sitzung fortsetzen
                 </button>
               </form>
+
+              <div className="flex items-center gap-3 my-5">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-sm text-gray-400">oder</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+
+              <p className="text-gray-500 text-sm mb-3">Exportierte Sitzung aus Datei wiederherstellen</p>
+              <input
+                ref={importFileRef}
+                type="file"
+                accept=".json"
+                onChange={handleImportFile}
+                className="hidden"
+                id="import-session-file"
+              />
+              <button
+                type="button"
+                onClick={() => { setImportError(''); importFileRef.current?.click(); }}
+                className="btn-secondary w-full"
+              >
+                📂 Sitzung importieren
+              </button>
+              {importError && <p className="text-red-600 text-sm mt-2">{importError}</p>}
             </div>
           </motion.div>
         </div>

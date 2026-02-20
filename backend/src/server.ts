@@ -417,6 +417,22 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
+  // Export Session (Teacher only)
+  socket.on('export-session', () => {
+    try {
+      const ctx = getRoomForSocket(socket.id);
+      if (!ctx) { socket.emit(SocketEvents.ERROR, 'Kein Raum beigetreten'); return; }
+      const { room, roomCode } = ctx;
+
+      const data = SessionPersistence.buildPersistedData(room);
+      socket.emit('session-exported', data);
+      console.log(`[${roomCode}] Session exported`);
+    } catch (error) {
+      socket.emit(SocketEvents.ERROR, 'Export fehlgeschlagen');
+      console.error('Export session error:', error);
+    }
+  });
+
   // Export Results
   socket.on(SocketEvents.EXPORT_RESULTS, async (data: ExportRequest) => {
     try {
@@ -473,6 +489,23 @@ io.on('connection', (socket: Socket) => {
     }
     socketRooms.delete(socket.id);
   });
+});
+
+// Import Session
+app.post('/api/sessions/import', (req, res) => {
+  try {
+    const data = req.body as SessionPersistence.PersistedSession;
+    if (!data || !Array.isArray(data.songs) || !data.phase || !data.roomCode) {
+      res.status(400).json({ error: 'Ungültige Session-Daten' });
+      return;
+    }
+    const roomCode = roomManager.importRoom(data);
+    res.json({ roomCode });
+    console.log(`Session imported as room ${roomCode}`);
+  } catch (err) {
+    console.error('Import session error:', err);
+    res.status(500).json({ error: 'Import fehlgeschlagen' });
+  }
 });
 
 // Health check endpoint

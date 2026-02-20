@@ -222,6 +222,16 @@ export const useSocket = () => {
     [socket]
   );
 
+  const exportSession = useCallback(
+    (callback: (data: object) => void) => {
+      if (socket) {
+        socket.emit('export-session');
+        socket.once('session-exported', callback);
+      }
+    },
+    [socket]
+  );
+
   const resetSession = useCallback(() => {
     if (socket) {
       socket.emit('reset-session');
@@ -258,6 +268,7 @@ export const useSocket = () => {
     setPassword: setPasswordFn,
     checkPasswordStatus,
     exportResults,
+    exportSession,
     resetSession,
   };
 };

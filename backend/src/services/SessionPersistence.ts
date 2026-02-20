@@ -6,7 +6,7 @@ import { SongModel } from '../models/Song';
 const SESSIONS_DIR = path.join(__dirname, '../../sessions');
 const MAX_AGE_DAYS = 7;
 
-interface PersistedSong {
+export interface PersistedSong {
   id: string;
   title: string;
   artist: string;
@@ -17,7 +17,7 @@ interface PersistedSong {
   submitterClientId?: string;
 }
 
-interface PersistedSession {
+export interface PersistedSession {
   roomCode: string;
   password: string | null;
   phase: 'submission' | 'presentation' | 'results';
@@ -38,8 +38,7 @@ function filePath(roomCode: string): string {
   return path.join(SESSIONS_DIR, `${roomCode}.json`);
 }
 
-export function save(room: Room): void {
-  ensureDir();
+export function buildPersistedData(room: Room): PersistedSession {
   const songs: PersistedSong[] = Array.from(room.session.songs.values()).map(s => ({
     id: s.id,
     title: s.title,
@@ -51,7 +50,7 @@ export function save(room: Room): void {
     submitterClientId: s.submitterClientId,
   }));
 
-  const data: PersistedSession = {
+  return {
     roomCode: room.roomCode,
     password: (room as any).password,
     phase: room.session.phase,
@@ -61,7 +60,34 @@ export function save(room: Room): void {
     createdAt: room.createdAt.toISOString(),
     savedAt: new Date().toISOString(),
   };
+}
 
+export function restoreRoomFromData(data: PersistedSession, overrideCode?: string): Room {
+  const code = overrideCode || data.roomCode;
+  const room = new Room(code);
+
+  (room as any).password = data.password;
+
+  for (const s of data.songs) {
+    const song = new SongModel(s.title, s.artist, s.link, s.submitterClientId);
+    song.id = s.id;
+    song.votes = s.votes;
+    song.totalVotes = s.totalVotes;
+    song.averageScore = s.averageScore;
+    room.session.songs.set(song.id, song);
+  }
+
+  room.session.phase = data.phase;
+  room.session.currentSongIndex = data.currentSongIndex;
+  room.session.presentationOrder = data.presentationOrder;
+  (room as any).createdAt = new Date(data.createdAt);
+
+  return room;
+}
+
+export function save(room: Room): void {
+  ensureDir();
+  const data = buildPersistedData(room);
   fs.writeFile(filePath(room.roomCode), JSON.stringify(data, null, 2), err => {
     if (err) console.error(`[SessionPersistence] Failed to save ${room.roomCode}:`, err);
   });
@@ -90,29 +116,7 @@ export function loadAll(): Room[] {
         continue;
       }
 
-      const room = new Room(data.roomCode);
-
-      // Restore password via private field access
-      (room as any).password = data.password;
-
-      // Restore songs
-      for (const s of data.songs) {
-        const song = new SongModel(s.title, s.artist, s.link, s.submitterClientId);
-        song.id = s.id; // restore original ID
-        song.votes = s.votes;
-        song.totalVotes = s.totalVotes;
-        song.averageScore = s.averageScore;
-        room.session.songs.set(song.id, song);
-      }
-
-      // Restore presentation state
-      room.session.phase = data.phase;
-      room.session.currentSongIndex = data.currentSongIndex;
-      room.session.presentationOrder = data.presentationOrder;
-
-      // Restore createdAt
-      (room as any).createdAt = new Date(data.createdAt);
-
+      const room = restoreRoomFromData(data);
       rooms.push(room);
       console.log(`[SessionPersistence] Restored room ${data.roomCode} (phase: ${data.phase}, songs: ${data.songs.length})`);
     } catch (err) {
