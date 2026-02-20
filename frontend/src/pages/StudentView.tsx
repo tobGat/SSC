@@ -46,7 +46,7 @@ export const StudentView = () => {
   // Reopen submission form if teacher deleted this student's song
   useEffect(() => {
     if (mySongWasDeleted && storageKey) {
-      localStorage.removeItem(storageKey);
+      localStorage.setItem(storageKey, 'deleted'); // 'deleted' !== 'true' → form shows on reload too
       setSongSubmitted(false);
     }
   }, [mySongWasDeleted, storageKey]);
