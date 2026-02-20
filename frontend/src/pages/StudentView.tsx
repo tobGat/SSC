@@ -24,11 +24,15 @@ export const StudentView = () => {
     submitVote,
   } = useSocket();
 
-  const [songSubmitted, setSongSubmitted] = useState(false);
+  const storageKey = roomCode ? `ssc_submitted_${roomCode}` : null;
+  const [songSubmitted, setSongSubmitted] = useState(() =>
+    storageKey ? localStorage.getItem(storageKey) === 'true' : false
+  );
 
   const handleSubmitSong = (title: string, artist: string, link?: string) => {
     submitSong(title, artist, link);
     setSongSubmitted(true);
+    if (storageKey) localStorage.setItem(storageKey, 'true');
   };
 
   // Auto-join room from URL (also re-joins after reconnect)
