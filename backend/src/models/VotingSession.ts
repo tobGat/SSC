@@ -18,8 +18,8 @@ export class VotingSessionModel implements VotingSession {
     this.votedStudents = new Set();
   }
 
-  addSong(title: string, artist: string, link?: string): SongModel {
-    const song = new SongModel(title, artist, link);
+  addSong(title: string, artist: string, link?: string, clientId?: string): SongModel {
+    const song = new SongModel(title, artist, link, clientId);
     this.songs.set(song.id, song);
     return song;
   }
@@ -34,8 +34,11 @@ export class VotingSessionModel implements VotingSession {
     return song;
   }
 
-  deleteSong(id: string): boolean {
-    return this.songs.delete(id);
+  deleteSong(id: string): { deleted: boolean; submitterClientId?: string } {
+    const song = this.songs.get(id);
+    if (!song) return { deleted: false };
+    this.songs.delete(id);
+    return { deleted: true, submitterClientId: song.submitterClientId };
   }
 
   startPresentation(): void {

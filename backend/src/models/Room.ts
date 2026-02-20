@@ -4,6 +4,7 @@ export class Room {
   public readonly roomCode: string;
   public readonly session: VotingSessionModel;
   public readonly adminSockets: Set<string>;
+  public readonly clientSockets: Map<string, string>; // clientId -> socketId
   public readonly createdAt: Date;
   public lastActivity: Date;
 
@@ -14,6 +15,7 @@ export class Room {
     this.roomCode = roomCode;
     this.session = new VotingSessionModel();
     this.adminSockets = new Set();
+    this.clientSockets = new Map();
     this.createdAt = new Date();
     this.lastActivity = new Date();
   }

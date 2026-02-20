@@ -17,10 +17,16 @@ export interface VotingSession {
   votedStudents: Set<string>;
 }
 
+export interface JoinRoomData {
+  roomCode: string;
+  clientId?: string;
+}
+
 export interface SongSubmission {
   title: string;
   artist: string;
   link?: string;
+  clientId?: string;
 }
 
 export interface SongEdit {
@@ -80,6 +86,7 @@ export const SocketEvents = {
   SET_PASSWORD: 'set-password',
 
   // Server to Client
+  SONG_DELETED: 'song-deleted',
   ROOM_CREATED: 'room-created',
   ROOM_JOINED: 'room-joined',
   ROOM_ERROR: 'room-error',

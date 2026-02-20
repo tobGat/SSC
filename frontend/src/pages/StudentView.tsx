@@ -22,6 +22,7 @@ export const StudentView = () => {
     joinRoom,
     submitSong,
     submitVote,
+    mySongWasDeleted,
   } = useSocket();
 
   const storageKey = roomCode ? `ssc_submitted_${roomCode}` : null;
@@ -41,6 +42,14 @@ export const StudentView = () => {
       joinRoom(roomCode);
     }
   }, [roomCode, connected, roomJoined, joinRoom]);
+
+  // Reopen submission form if teacher deleted this student's song
+  useEffect(() => {
+    if (mySongWasDeleted && storageKey) {
+      localStorage.removeItem(storageKey);
+      setSongSubmitted(false);
+    }
+  }, [mySongWasDeleted, storageKey]);
 
   // Room error
   if (roomError) {

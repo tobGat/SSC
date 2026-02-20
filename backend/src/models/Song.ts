@@ -8,12 +8,14 @@ export class SongModel implements Song {
   averageScore?: number;
   votes: number[];
   totalVotes: number;
+  submitterClientId?: string;
 
-  constructor(title: string, artist: string, link?: string) {
+  constructor(title: string, artist: string, link?: string, submitterClientId?: string) {
     this.id = this.generateId();
     this.title = title;
     this.artist = artist;
     this.link = link;
+    this.submitterClientId = submitterClientId;
     this.votes = [];
     this.totalVotes = 0;
   }

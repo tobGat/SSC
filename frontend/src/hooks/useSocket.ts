@@ -4,6 +4,17 @@ import type { Song, CurrentSongData, VotingStats, SongRanking, AuthResponse, Pha
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
+// Persistent client ID to identify this browser across reconnects
+const getClientId = (): string => {
+  let id = localStorage.getItem('ssc_client_id');
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem('ssc_client_id', id);
+  }
+  return id;
+};
+const clientId = getClientId();
+
 export const useSocket = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
@@ -21,6 +32,7 @@ export const useSocket = () => {
   const [roomJoined, setRoomJoined] = useState(false);
   const [roomError, setRoomError] = useState<string | null>(null);
   const [currentRoomCode, setCurrentRoomCode] = useState<string | null>(null);
+  const [mySongWasDeleted, setMySongWasDeleted] = useState(false);
 
   useEffect(() => {
     const newSocket = io(BACKEND_URL);
@@ -54,6 +66,10 @@ export const useSocket = () => {
       setRoomError(message);
       setRoomJoined(false);
       console.error('Room error:', message);
+    });
+
+    newSocket.on('song-deleted', () => {
+      setMySongWasDeleted(true);
     });
 
     newSocket.on('songs-updated', (updatedSongs: Song[]) => {
@@ -116,7 +132,7 @@ export const useSocket = () => {
     (roomCode: string) => {
       if (socket) {
         setRoomError(null);
-        socket.emit('join-room', roomCode);
+        socket.emit('join-room', { roomCode, clientId });
       }
     },
     [socket]
@@ -125,7 +141,7 @@ export const useSocket = () => {
   const submitSong = useCallback(
     (title: string, artist: string, link?: string) => {
       if (socket) {
-        socket.emit('submit-song', { title, artist, link });
+        socket.emit('submit-song', { title, artist, link, clientId });
       }
     },
     [socket]
@@ -229,6 +245,7 @@ export const useSocket = () => {
     roomJoined,
     roomError,
     currentRoomCode,
+    mySongWasDeleted,
     createRoom,
     joinRoom,
     submitSong,

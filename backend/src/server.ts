@@ -3,7 +3,7 @@ import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { SocketEvents, SongSubmission, SongEdit, VoteSubmission, ExportRequest } from './types/socket-events';
+import { SocketEvents, SongSubmission, SongEdit, VoteSubmission, ExportRequest, JoinRoomData } from './types/socket-events';
 import { RoomManager } from './services/RoomManager';
 import { Room } from './models/Room';
 import { ExportService } from './services/ExportService';
@@ -96,8 +96,11 @@ io.on('connection', (socket: Socket) => {
   });
 
   // Join Room (Student or Teacher login)
-  socket.on(SocketEvents.JOIN_ROOM, (roomCode: string) => {
+  socket.on(SocketEvents.JOIN_ROOM, (data: JoinRoomData | string) => {
     try {
+      const roomCode = typeof data === 'string' ? data : data.roomCode;
+      const clientId = typeof data === 'object' ? data.clientId : undefined;
+
       if (!roomCode || typeof roomCode !== 'string') {
         socket.emit(SocketEvents.ROOM_ERROR, 'Ungültiger Raumcode');
         return;
@@ -114,6 +117,11 @@ io.on('connection', (socket: Socket) => {
       socket.join(code);
       socketRooms.set(socket.id, code);
       room.session.addStudent(socket.id);
+
+      // Track clientId → socketId for resubmission notification
+      if (clientId) {
+        room.clientSockets.set(clientId, socket.id);
+      }
 
       socket.emit(SocketEvents.ROOM_JOINED, { roomCode: code });
 
@@ -158,7 +166,8 @@ io.on('connection', (socket: Socket) => {
         return;
       }
 
-      room.session.addSong(title.trim(), artist.trim(), link?.trim());
+      const { clientId } = data;
+      room.session.addSong(title.trim(), artist.trim(), link?.trim(), clientId);
       emitSongsUpdate(roomCode, room);
       console.log(`[${roomCode}] Song submitted: ${title} by ${artist}`);
     } catch (error) {
@@ -201,10 +210,18 @@ io.on('connection', (socket: Socket) => {
       if (!ctx) { socket.emit(SocketEvents.ERROR, 'Kein Raum beigetreten'); return; }
       const { room, roomCode } = ctx;
 
-      const deleted = room.session.deleteSong(songId);
-      if (!deleted) {
+      const result = room.session.deleteSong(songId);
+      if (!result.deleted) {
         socket.emit(SocketEvents.ERROR, 'Song not found');
         return;
+      }
+
+      // Notify the original submitter so they can resubmit
+      if (result.submitterClientId) {
+        const submitterSocketId = room.clientSockets.get(result.submitterClientId);
+        if (submitterSocketId) {
+          io.to(submitterSocketId).emit(SocketEvents.SONG_DELETED);
+        }
       }
 
       emitSongsUpdate(roomCode, room);
