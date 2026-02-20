@@ -33,6 +33,7 @@ export const useSocket = () => {
   const [roomError, setRoomError] = useState<string | null>(null);
   const [currentRoomCode, setCurrentRoomCode] = useState<string | null>(null);
   const [mySongWasDeleted, setMySongWasDeleted] = useState(false);
+  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
 
   useEffect(() => {
     const newSocket = io(BACKEND_URL);
@@ -70,6 +71,10 @@ export const useSocket = () => {
 
     newSocket.on('song-deleted', () => {
       setMySongWasDeleted(true);
+    });
+
+    newSocket.on('already-submitted', () => {
+      setAlreadySubmitted(true);
     });
 
     newSocket.on('songs-updated', (updatedSongs: Song[]) => {
@@ -256,6 +261,7 @@ export const useSocket = () => {
     roomError,
     currentRoomCode,
     mySongWasDeleted,
+    alreadySubmitted,
     createRoom,
     joinRoom,
     submitSong,

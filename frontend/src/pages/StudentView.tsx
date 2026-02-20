@@ -23,6 +23,7 @@ export const StudentView = () => {
     submitSong,
     submitVote,
     mySongWasDeleted,
+    alreadySubmitted,
   } = useSocket();
 
   const storageKey = roomCode ? `ssc_submitted_${roomCode}` : null;
@@ -50,6 +51,14 @@ export const StudentView = () => {
       setSongSubmitted(false);
     }
   }, [mySongWasDeleted, storageKey]);
+
+  // After session import with new room code: server tells us our song is already in the session
+  useEffect(() => {
+    if (alreadySubmitted && storageKey) {
+      localStorage.setItem(storageKey, 'true');
+      setSongSubmitted(true);
+    }
+  }, [alreadySubmitted, storageKey]);
 
   // Room error
   if (roomError) {

@@ -122,6 +122,13 @@ io.on('connection', (socket: Socket) => {
       // Track clientId → socketId for resubmission notification
       if (clientId) {
         room.clientSockets.set(clientId, socket.id);
+
+        // Notify student if they already have a song in this session (e.g. after import)
+        const hasSubmitted = Array.from(room.session.songs.values())
+          .some(s => s.submitterClientId === clientId);
+        if (hasSubmitted) {
+          socket.emit('already-submitted');
+        }
       }
 
       socket.emit(SocketEvents.ROOM_JOINED, { roomCode: code });
