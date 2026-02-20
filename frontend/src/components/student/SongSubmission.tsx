@@ -3,14 +3,14 @@ import { motion } from 'framer-motion';
 
 interface SongSubmissionProps {
   onSubmit: (title: string, artist: string, link?: string) => void;
+  submitted: boolean;
   phase: string;
 }
 
-export const SongSubmission = ({ onSubmit, phase }: SongSubmissionProps) => {
+export const SongSubmission = ({ onSubmit, submitted, phase }: SongSubmissionProps) => {
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [link, setLink] = useState('');
-  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +26,6 @@ export const SongSubmission = ({ onSubmit, phase }: SongSubmissionProps) => {
     }
 
     onSubmit(title.trim(), artist.trim(), link.trim() || undefined);
-    setSubmitted(true);
   };
 
   if (phase !== 'submission') {

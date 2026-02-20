@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSocket } from '../hooks/useSocket';
 import { SongSubmission } from '../components/student/SongSubmission';
@@ -24,12 +24,19 @@ export const StudentView = () => {
     submitVote,
   } = useSocket();
 
-  // Auto-join room from URL
+  const [songSubmitted, setSongSubmitted] = useState(false);
+
+  const handleSubmitSong = (title: string, artist: string, link?: string) => {
+    submitSong(title, artist, link);
+    setSongSubmitted(true);
+  };
+
+  // Auto-join room from URL (also re-joins after reconnect)
   useEffect(() => {
-    if (roomCode && connected && !roomJoined && !currentRoomCode) {
+    if (roomCode && connected && !roomJoined) {
       joinRoom(roomCode);
     }
-  }, [roomCode, connected, roomJoined, currentRoomCode, joinRoom]);
+  }, [roomCode, connected, roomJoined, joinRoom]);
 
   // Room error
   if (roomError) {
@@ -88,7 +95,7 @@ export const StudentView = () => {
       {/* Main Content */}
       <div className="max-w-6xl mx-auto">
         {phase === 'submission' && (
-          <SongSubmission onSubmit={submitSong} phase={phase} />
+          <SongSubmission onSubmit={handleSubmitSong} submitted={songSubmitted} phase={phase} />
         )}
 
         {phase === 'presentation' && (

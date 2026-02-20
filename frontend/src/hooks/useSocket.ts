@@ -32,6 +32,7 @@ export const useSocket = () => {
 
     newSocket.on('disconnect', () => {
       setConnected(false);
+      setRoomJoined(false); // Reset so auto-rejoin triggers on reconnect
       console.log('Disconnected from server');
     });
 
