@@ -16,6 +16,7 @@ export const SongList = ({ songs, onEdit, onDelete, onStartPresentation, onReset
   const [editTitle, setEditTitle] = useState('');
   const [editArtist, setEditArtist] = useState('');
   const [editLink, setEditLink] = useState('');
+  const [deleteModal, setDeleteModal] = useState<Song | null>(null);
 
   const handleEditClick = (song: Song) => {
     setEditingId(song.id);
@@ -36,8 +37,13 @@ export const SongList = ({ songs, onEdit, onDelete, onStartPresentation, onReset
   };
 
   const handleDeleteClick = (song: Song) => {
-    if (confirm(`Song "${song.title}" wirklich löschen?`)) {
-      onDelete(song.id);
+    setDeleteModal(song);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteModal) {
+      onDelete(deleteModal.id);
+      setDeleteModal(null);
     }
   };
 
@@ -165,6 +171,51 @@ export const SongList = ({ songs, onEdit, onDelete, onStartPresentation, onReset
           </div>
         )}
       </div>
+      {/* Delete Confirmation Modal */}
+      {deleteModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-6"
+          onClick={() => setDeleteModal(null)}
+        >
+          <motion.div
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 text-center"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="text-6xl mb-4">🗑️</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Song löschen?</h2>
+            <p className="text-lg text-gray-600 mb-1">
+              <span className="font-semibold text-gray-800">„{deleteModal.title}"</span>
+            </p>
+            <p className="text-gray-500 mb-6">{deleteModal.artist}</p>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8">
+              <p className="text-amber-800 font-semibold text-lg">
+                ✏️ Die Schüler:in darf danach einen neuen Song einreichen.
+              </p>
+            </div>
+
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={() => setDeleteModal(null)}
+                className="btn-secondary px-8 py-3 text-lg"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-8 py-3 text-lg font-bold bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors"
+              >
+                Ja, löschen
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 };
