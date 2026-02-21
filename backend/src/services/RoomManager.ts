@@ -57,14 +57,18 @@ export class RoomManager {
   }
 
   importRoom(data: SessionPersistence.PersistedSession): string {
-    let code = data.roomCode;
+    const code = data.roomCode;
+    // If the code is already in use, overwrite it so the original link stays valid
     if (this.rooms.has(code)) {
-      code = this.generateCode();
-      while (this.rooms.has(code)) {
-        code = this.generateCode();
-      }
+      this.rooms.delete(code);
+      console.log(`Room import: overwriting existing room ${code}`);
     }
     const room = SessionPersistence.restoreRoomFromData(data, code);
+    // Reset votes for the current song so students vote fresh after import (no double-counting)
+    if (room.session.phase === 'presentation') {
+      const currentSong = room.session.getCurrentSong();
+      if (currentSong) currentSong.resetVotes();
+    }
     this.rooms.set(code, room);
     console.log(`Room imported: ${code} (total: ${this.rooms.size})`);
     return code;
