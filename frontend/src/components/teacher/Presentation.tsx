@@ -19,10 +19,11 @@ interface PresentationProps {
   votingStats: { voted: number; total: number };
   votingComplete: { songId: string; averageScore?: number } | null;
   onNext: () => void;
+  onExport: () => void;
   phase: string;
 }
 
-export const Presentation = ({ currentSong, votingStats, votingComplete, onNext, phase }: PresentationProps) => {
+export const Presentation = ({ currentSong, votingStats, votingComplete, onNext, onExport, phase }: PresentationProps) => {
   const youtubeId = useMemo(() => {
     if (currentSong?.song.link) return getYouTubeId(currentSong.song.link);
     return null;
@@ -69,6 +70,15 @@ export const Presentation = ({ currentSong, votingStats, votingComplete, onNext,
           Song {currentSong.songNumber} von {currentSong.totalSongs}
         </p>
       </div>
+
+      {/* Export Button */}
+      <button
+        onClick={onExport}
+        className="absolute bottom-8 right-8 bg-white/80 hover:bg-white text-gray-700 text-sm font-medium px-4 py-2 rounded-lg shadow transition-colors"
+        title="Sitzung als Datei speichern – kann später wieder importiert werden"
+      >
+        💾 Exportieren
+      </button>
 
       {/* Manual Next Button */}
       {votingComplete && (

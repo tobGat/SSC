@@ -205,6 +205,7 @@ export const TeacherView = () => {
           votingStats={votingStats}
           votingComplete={votingComplete}
           onNext={nextSong}
+          onExport={handleExportSession}
           phase={phase}
         />
       )}
