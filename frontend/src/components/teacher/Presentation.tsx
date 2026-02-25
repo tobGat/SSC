@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { CurrentSongData } from '../../types';
 
@@ -28,16 +28,6 @@ export const Presentation = ({ currentSong, votingStats, votingComplete, onNext,
     if (currentSong?.song.link) return getYouTubeId(currentSong.song.link);
     return null;
   }, [currentSong?.song.link]);
-
-  useEffect(() => {
-    // Auto-advance when voting is complete (after 5 seconds)
-    if (votingComplete && currentSong && votingComplete.songId === currentSong.song.id) {
-      const timer = setTimeout(() => {
-        onNext();
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [votingComplete, currentSong, onNext]);
 
   if (phase !== 'presentation') {
     return (
@@ -80,15 +70,13 @@ export const Presentation = ({ currentSong, votingStats, votingComplete, onNext,
         💾 Exportieren
       </button>
 
-      {/* Manual Next Button */}
-      {votingComplete && (
-        <button
-          onClick={onNext}
-          className="absolute top-8 left-8 bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-lg shadow-lg"
-        >
-          Nächster Song →
-        </button>
-      )}
+      {/* Manual Next Button – always visible */}
+      <button
+        onClick={onNext}
+        className="absolute top-8 left-8 bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-lg shadow-lg"
+      >
+        Nächster Song →
+      </button>
 
       {/* Main Song Card */}
       <motion.div
@@ -184,7 +172,7 @@ export const Presentation = ({ currentSong, votingStats, votingComplete, onNext,
                   </p>
                   <p className="text-gray-500 text-sm mt-2">Punkte</p>
                 </div>
-                <p className="text-gray-600 mt-6 text-sm">Weiter zum nächsten Song in 5 Sekunden...</p>
+                <p className="text-gray-600 mt-6 text-sm">Lehrkraft kann jetzt weiterschalten.</p>
               </div>
             </div>
           </motion.div>

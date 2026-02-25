@@ -163,7 +163,7 @@ io.on('connection', (socket: Socket) => {
         return;
       }
 
-      const { title, artist, link } = data;
+      const { title, artist, link, clientId } = data;
       if (!title || !artist) {
         socket.emit(SocketEvents.ERROR, 'Title and artist are required');
         return;
@@ -174,7 +174,16 @@ io.on('connection', (socket: Socket) => {
         return;
       }
 
-      const { clientId } = data;
+      // Prevent duplicate submissions from same student (e.g. multiple tabs)
+      if (clientId) {
+        const alreadyHasSong = Array.from(room.session.songs.values())
+          .some(s => s.submitterClientId === clientId);
+        if (alreadyHasSong) {
+          socket.emit('already-submitted');
+          return;
+        }
+      }
+
       room.session.addSong(title.trim(), artist.trim(), link?.trim(), clientId);
       emitSongsUpdate(roomCode, room);
       console.log(`[${roomCode}] Song submitted: ${title} by ${artist}`);

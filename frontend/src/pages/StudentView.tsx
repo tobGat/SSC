@@ -52,13 +52,25 @@ export const StudentView = () => {
     }
   }, [mySongWasDeleted, storageKey]);
 
-  // After session import with new room code: server tells us our song is already in the session
+  // After session import / duplicate tab: server tells us our song is already in the session
   useEffect(() => {
     if (alreadySubmitted && storageKey) {
       localStorage.setItem(storageKey, 'true');
       setSongSubmitted(true);
     }
   }, [alreadySubmitted, storageKey]);
+
+  // Sync submission state across open tabs (via localStorage storage event)
+  useEffect(() => {
+    if (!storageKey) return;
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === storageKey && e.newValue === 'true') {
+        setSongSubmitted(true);
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [storageKey]);
 
   // Room error
   if (roomError) {
