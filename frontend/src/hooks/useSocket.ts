@@ -34,6 +34,7 @@ export const useSocket = () => {
   const [currentRoomCode, setCurrentRoomCode] = useState<string | null>(null);
   const [mySongWasDeleted, setMySongWasDeleted] = useState(false);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
+  const [duplicateTab, setDuplicateTab] = useState(false);
 
   useEffect(() => {
     const newSocket = io(BACKEND_URL);
@@ -75,6 +76,10 @@ export const useSocket = () => {
 
     newSocket.on('already-submitted', () => {
       setAlreadySubmitted(true);
+    });
+
+    newSocket.on('duplicate-tab', () => {
+      setDuplicateTab(true);
     });
 
     newSocket.on('songs-updated', (updatedSongs: Song[]) => {
@@ -262,6 +267,7 @@ export const useSocket = () => {
     currentRoomCode,
     mySongWasDeleted,
     alreadySubmitted,
+    duplicateTab,
     createRoom,
     joinRoom,
     submitSong,

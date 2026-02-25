@@ -50,11 +50,24 @@ const emitPhaseChange = (roomCode: string, room: Room) => {
   io.to(roomCode).emit(SocketEvents.PHASE_CHANGED, room.session.phase);
 };
 
+// Count submitters who are currently connected (used for vote stats)
+const countConnectedSubmitters = (room: Room): number => {
+  let count = 0;
+  for (const song of room.session.songs.values()) {
+    if (song.submitterClientId) {
+      const socketId = room.clientSockets.get(song.submitterClientId);
+      if (socketId && room.session.connectedStudents.has(socketId)) {
+        count++;
+      }
+    }
+  }
+  return count;
+};
+
 const emitVoteStats = (roomCode: string, room: Room) => {
-  const actualStudentCount = room.session.connectedStudents.size - room.adminSockets.size;
   io.to(roomCode).emit(SocketEvents.VOTE_STATS, {
     voted: room.session.votedStudents.size,
-    total: actualStudentCount,
+    total: countConnectedSubmitters(room),
   });
 };
 
@@ -62,14 +75,13 @@ const emitCurrentSong = (roomCode: string, room: Room) => {
   const currentSong = room.session.getCurrentSong();
   if (!currentSong) return;
 
-  const actualStudentCount = room.session.connectedStudents.size - room.adminSockets.size;
   io.to(roomCode).emit(SocketEvents.CURRENT_SONG, {
     song: currentSong.toJSON(),
     songNumber: room.session.currentSongIndex + 1,
     totalSongs: room.session.presentationOrder.length,
     votingStats: {
       voted: room.session.votedStudents.size,
-      total: actualStudentCount,
+      total: countConnectedSubmitters(room),
     },
   });
 };
@@ -119,9 +131,20 @@ io.on('connection', (socket: Socket) => {
       socketRooms.set(socket.id, code);
       room.session.addStudent(socket.id);
 
-      // Track clientId → socketId for resubmission notification
+      // Track clientId → socketId (and reverse)
       if (clientId) {
+        // Prevent duplicate tab: if clientId already has an active socket, reject new connection
+        const existingSocketId = room.clientSockets.get(clientId);
+        if (existingSocketId && existingSocketId !== socket.id && io.sockets.sockets.has(existingSocketId)) {
+          socket.emit('duplicate-tab');
+          socket.leave(code);
+          socketRooms.delete(socket.id);
+          room.session.removeStudent(socket.id);
+          return;
+        }
+
         room.clientSockets.set(clientId, socket.id);
+        room.socketClientIds.set(socket.id, clientId);
 
         // Notify student if they already have a song in this session (e.g. after import)
         const hasSubmitted = Array.from(room.session.songs.values())
@@ -302,6 +325,19 @@ io.on('connection', (socket: Socket) => {
         return;
       }
 
+      // Only students who submitted a song can vote
+      const voterClientId = room.socketClientIds.get(socket.id);
+      if (!voterClientId) {
+        socket.emit(SocketEvents.ERROR, 'Nur Schüler:innen mit eingereichtem Song können abstimmen');
+        return;
+      }
+      const voterHasSong = Array.from(room.session.songs.values())
+        .some(s => s.submitterClientId === voterClientId);
+      if (!voterHasSong) {
+        socket.emit(SocketEvents.ERROR, 'Nur Schüler:innen mit eingereichtem Song können abstimmen');
+        return;
+      }
+
       const { songId, points } = data;
       if (!songId || points < 1 || points > 10) {
         socket.emit(SocketEvents.ERROR, 'Invalid vote data');
@@ -317,9 +353,9 @@ io.on('connection', (socket: Socket) => {
       emitVoteStats(roomCode, room);
       console.log(`[${roomCode}] Vote: ${points} points for ${songId}`);
 
-      // Check if all students have voted (excluding admins)
-      const actualStudentCount = room.session.connectedStudents.size - room.adminSockets.size;
-      const allVoted = room.session.votedStudents.size >= actualStudentCount && actualStudentCount > 0;
+      // Check if all connected submitters have voted
+      const connectedSubmitters = countConnectedSubmitters(room);
+      const allVoted = room.session.votedStudents.size >= connectedSubmitters && connectedSubmitters > 0;
 
       if (allVoted) {
         const currentSong = room.session.getCurrentSong();
@@ -492,6 +528,7 @@ io.on('connection', (socket: Socket) => {
       const { room, roomCode } = ctx;
       room.session.removeStudent(socket.id);
       room.adminSockets.delete(socket.id);
+      room.socketClientIds.delete(socket.id);
       if (room.session.phase === 'presentation') {
         emitVoteStats(roomCode, room);
       }

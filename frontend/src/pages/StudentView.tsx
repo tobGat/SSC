@@ -24,6 +24,7 @@ export const StudentView = () => {
     submitVote,
     mySongWasDeleted,
     alreadySubmitted,
+    duplicateTab,
   } = useSocket();
 
   const storageKey = roomCode ? `ssc_submitted_${roomCode}` : null;
@@ -71,6 +72,23 @@ export const StudentView = () => {
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, [storageKey]);
+
+  // Duplicate tab
+  if (duplicateTab) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="card text-center max-w-md"
+        >
+          <div className="text-6xl mb-4">🔒</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Bereits geöffnet</h2>
+          <p className="text-gray-600 mb-6">Dieser Raum ist bereits in einem anderen Tab geöffnet. Bitte schließe diesen Tab.</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   // Room error
   if (roomError) {
