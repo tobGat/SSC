@@ -93,6 +93,7 @@ export const useSocket = () => {
     newSocket.on('current-song', (data: CurrentSongData) => {
       setCurrentSong(data);
       setVotingComplete(null);
+      setVotingStats(data.votingStats); // Reset vote stats for the new song
     });
 
     newSocket.on('vote-stats', (stats: VotingStats) => {
