@@ -67,7 +67,7 @@ const countConnectedSubmitters = (room: Room): number => {
 const emitVoteStats = (roomCode: string, room: Room) => {
   io.to(roomCode).emit(SocketEvents.VOTE_STATS, {
     voted: room.session.votedStudents.size,
-    total: countConnectedSubmitters(room),
+    total: room.session.songs.size, // all submitted songs = all eligible voters
   });
 };
 
@@ -81,7 +81,7 @@ const emitCurrentSong = (roomCode: string, room: Room) => {
     totalSongs: room.session.presentationOrder.length,
     votingStats: {
       voted: room.session.votedStudents.size,
-      total: countConnectedSubmitters(room),
+      total: room.session.songs.size,
     },
   });
 };
