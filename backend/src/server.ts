@@ -67,7 +67,7 @@ const countConnectedSubmitters = (room: Room): number => {
 const emitVoteStats = (roomCode: string, room: Room) => {
   io.to(roomCode).emit(SocketEvents.VOTE_STATS, {
     voted: room.session.votedStudents.size,
-    total: room.session.songs.size, // all submitted songs = all eligible voters
+    total: countConnectedSubmitters(room),
   });
 };
 
@@ -81,7 +81,7 @@ const emitCurrentSong = (roomCode: string, room: Room) => {
     totalSongs: room.session.presentationOrder.length,
     votingStats: {
       voted: room.session.votedStudents.size,
-      total: room.session.songs.size,
+      total: countConnectedSubmitters(room),
     },
   });
 };
@@ -133,14 +133,19 @@ io.on('connection', (socket: Socket) => {
 
       // Track clientId → socketId (and reverse)
       if (clientId) {
-        // Prevent duplicate tab: if clientId already has an active socket, reject new connection
+        // If this clientId already has an active socket, disconnect the old one.
+        // "Newest tab wins" – works for reconnects AND genuine second tabs.
         const existingSocketId = room.clientSockets.get(clientId);
         if (existingSocketId && existingSocketId !== socket.id && io.sockets.sockets.has(existingSocketId)) {
-          socket.emit('duplicate-tab');
-          socket.leave(code);
-          socketRooms.delete(socket.id);
-          room.session.removeStudent(socket.id);
-          return;
+          const oldSocket = io.sockets.sockets.get(existingSocketId);
+          if (oldSocket) {
+            oldSocket.emit('duplicate-tab'); // tell old tab it was displaced
+            // Pre-clean old socket tracking to avoid double-cleanup in its disconnect handler
+            room.session.removeStudent(existingSocketId);
+            room.socketClientIds.delete(existingSocketId);
+            socketRooms.delete(existingSocketId);
+            oldSocket.disconnect(true);
+          }
         }
 
         room.clientSockets.set(clientId, socket.id);
@@ -526,6 +531,11 @@ io.on('connection', (socket: Socket) => {
     const ctx = getRoomForSocket(socket.id);
     if (ctx) {
       const { room, roomCode } = ctx;
+      // Clean up clientSockets only if this socket is still the current one for its clientId
+      const cid = room.socketClientIds.get(socket.id);
+      if (cid && room.clientSockets.get(cid) === socket.id) {
+        room.clientSockets.delete(cid);
+      }
       room.session.removeStudent(socket.id);
       room.adminSockets.delete(socket.id);
       room.socketClientIds.delete(socket.id);

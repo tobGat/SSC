@@ -38,12 +38,12 @@ export const StudentView = () => {
     if (storageKey) localStorage.setItem(storageKey, 'true');
   };
 
-  // Auto-join room from URL (also re-joins after reconnect)
+  // Auto-join room from URL (also re-joins after reconnect, but not if displaced by another tab)
   useEffect(() => {
-    if (roomCode && connected && !roomJoined) {
+    if (roomCode && connected && !roomJoined && !duplicateTab) {
       joinRoom(roomCode);
     }
-  }, [roomCode, connected, roomJoined, joinRoom]);
+  }, [roomCode, connected, roomJoined, joinRoom, duplicateTab]);
 
   // Reopen submission form if teacher deleted this student's song
   useEffect(() => {
